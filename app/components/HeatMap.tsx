@@ -19,8 +19,8 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
-const DEFAULT_CENTER: [number, number] = [16.87, 96.20]; // Yangon
-const DEFAULT_ZOOM = 12;
+const DEFAULT_CENTER: [number, number] = [19.0, 96.1]; // Between Mandalay & Yangon
+const DEFAULT_ZOOM = 6;
 
 function createCountIcon(count: number) {
   const size = count < 10 ? 36 : count < 100 ? 44 : 52;
