@@ -5,12 +5,14 @@ export interface Entry {
   tag: string;
   lat: number;
   lng: number;
+  region: string;
   createdAt: string;
 }
 
 export interface GeocodingResult {
   lat: number;
   lng: number;
+  region: string;
 }
 
 export interface BatchResult {

@@ -1,7 +1,18 @@
 import { GeocodingResult } from "./types";
 
+function extractRegion(displayName: string): string {
+  // display_name: "懷德街, 嵐翠里, 板橋區, 埔墘, 新北市, 22045, 臺灣"
+  // 取倒數第三段（跳過國家和郵遞區號）作為 region
+  const parts = displayName.split(",").map((s) => s.trim());
+  // 從後面找：跳過國家、跳過純數字（郵遞區號）
+  for (let i = parts.length - 2; i >= 0; i--) {
+    if (!/^\d+$/.test(parts[i])) return parts[i];
+  }
+  return parts[parts.length - 1] || "未知";
+}
+
 async function geocodeWithNominatim(address: string): Promise<GeocodingResult | null> {
-  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`;
+  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1&addressdetails=1`;
   const response = await fetch(url, {
     headers: { "User-Agent": "heatmap-poc/1.0" },
     signal: AbortSignal.timeout(3000),
@@ -9,7 +20,11 @@ async function geocodeWithNominatim(address: string): Promise<GeocodingResult | 
   if (!response.ok) return null;
   const data = await response.json();
   if (!data.length) return null;
-  return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+  const item = data[0];
+  const addr = item.address || {};
+  // 優先用 state（州/省/直轄市），其次 city，最後從 display_name 擷取
+  const region = addr.state || addr.city || addr.county || extractRegion(item.display_name || "");
+  return { lat: parseFloat(item.lat), lng: parseFloat(item.lon), region };
 }
 
 async function geocodeWithGoogle(address: string): Promise<GeocodingResult | null> {
@@ -20,8 +35,15 @@ async function geocodeWithGoogle(address: string): Promise<GeocodingResult | nul
   if (!response.ok) return null;
   const data = await response.json();
   if (data.status !== "OK" || !data.results.length) return null;
-  const { lat, lng } = data.results[0].geometry.location;
-  return { lat, lng };
+  const result = data.results[0];
+  const { lat, lng } = result.geometry.location;
+  // 從 address_components 取行政區
+  const components = result.address_components || [];
+  const stateComp = components.find((c: { types: string[] }) =>
+    c.types.includes("administrative_area_level_1")
+  );
+  const region = stateComp?.long_name || address;
+  return { lat, lng, region };
 }
 
 // Nominatim 對精確門牌地址常查無結果。

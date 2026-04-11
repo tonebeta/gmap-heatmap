@@ -26,8 +26,8 @@ describe("POST /api/entries/batch", () => {
 
   it("processes valid CSV", async () => {
     mockGeocode
-      .mockResolvedValueOnce({ lat: 25.03, lng: 121.56 })
-      .mockResolvedValueOnce({ lat: 25.01, lng: 121.47 });
+      .mockResolvedValueOnce({ lat: 25.03, lng: 121.56, region: "臺北市" })
+      .mockResolvedValueOnce({ lat: 25.01, lng: 121.47, region: "新北市" });
     mockAddEntries.mockResolvedValue(undefined);
 
     const csv = `暱稱,地址,標籤\n小明,台北市,朋友\n小華,新北市,同事`;
@@ -42,7 +42,7 @@ describe("POST /api/entries/batch", () => {
 
   it("reports geocoding failures per row", async () => {
     mockGeocode
-      .mockResolvedValueOnce({ lat: 25.03, lng: 121.56 })
+      .mockResolvedValueOnce({ lat: 25.03, lng: 121.56, region: "臺北市" })
       .mockRejectedValueOnce(new Error("無法解析地址"));
     mockAddEntries.mockResolvedValue(undefined);
 
@@ -73,7 +73,7 @@ describe("POST /api/entries/batch", () => {
   });
 
   it("returns 500 when KV addEntries fails", async () => {
-    mockGeocode.mockResolvedValue({ lat: 25.03, lng: 121.56 });
+    mockGeocode.mockResolvedValue({ lat: 25.03, lng: 121.56, region: "臺北市" });
     mockAddEntries.mockRejectedValue(new Error("KV write failed"));
 
     const csv = `暱稱,地址,標籤\n小明,台北市,朋友`;

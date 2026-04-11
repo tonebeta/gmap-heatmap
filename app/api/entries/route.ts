@@ -40,6 +40,7 @@ export async function POST(request: Request) {
     tag: (tag ?? "").trim(),
     lat: coords.lat,
     lng: coords.lng,
+    region: coords.region,
     createdAt: new Date().toISOString(),
   };
 

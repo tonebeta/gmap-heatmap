@@ -41,7 +41,7 @@ describe("GET /api/entries", () => {
 
 describe("POST /api/entries", () => {
   it("creates entry with valid password", async () => {
-    mockGeocode.mockResolvedValue({ lat: 25.03, lng: 121.56 });
+    mockGeocode.mockResolvedValue({ lat: 25.03, lng: 121.56, region: "臺北市" });
     mockAddEntry.mockResolvedValue(undefined);
 
     const request = new Request("http://localhost/api/entries", {
@@ -80,7 +80,7 @@ describe("POST /api/entries", () => {
   });
 
   it("returns 500 when KV addEntry fails", async () => {
-    mockGeocode.mockResolvedValue({ lat: 25.03, lng: 121.56 });
+    mockGeocode.mockResolvedValue({ lat: 25.03, lng: 121.56, region: "臺北市" });
     mockAddEntry.mockRejectedValue(new Error("KV write failed"));
 
     const request = new Request("http://localhost/api/entries", {

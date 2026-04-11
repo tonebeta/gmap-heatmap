@@ -53,6 +53,7 @@ export async function POST(request: Request) {
         tag: row.tag,
         lat: coords.lat,
         lng: coords.lng,
+        region: coords.region,
         createdAt: new Date().toISOString(),
       });
       result.success++;
