@@ -21,3 +21,7 @@ export async function addEntries(newEntries: Entry[]): Promise<void> {
   entries.push(...newEntries);
   await kv.set(ENTRIES_KEY, entries);
 }
+
+export async function clearEntries(): Promise<void> {
+  await kv.del(ENTRIES_KEY);
+}

@@ -1,4 +1,4 @@
-import { GET, POST } from "@/api/entries/route";
+import { GET, POST, DELETE } from "@/api/entries/route";
 import * as kvModule from "@/lib/kv";
 import * as geocodeModule from "@/lib/geocode";
 
@@ -7,6 +7,7 @@ jest.mock("@/lib/geocode");
 
 const mockGetEntries = kvModule.getEntries as jest.MockedFunction<typeof kvModule.getEntries>;
 const mockAddEntry = kvModule.addEntry as jest.MockedFunction<typeof kvModule.addEntry>;
+const mockClearEntries = kvModule.clearEntries as jest.MockedFunction<typeof kvModule.clearEntries>;
 const mockGeocode = geocodeModule.geocodeAddress as jest.MockedFunction<typeof geocodeModule.geocodeAddress>;
 
 beforeEach(() => {
@@ -92,5 +93,38 @@ describe("POST /api/entries", () => {
     const data = await response.json();
     expect(response.status).toBe(500);
     expect(data.error).toBe("儲存失敗");
+  });
+});
+
+describe("DELETE /api/entries", () => {
+  function makeDeleteRequest(password: string) {
+    return new Request("http://localhost/api/entries", {
+      method: "DELETE",
+      headers: { "x-entry-password": password },
+    });
+  }
+
+  it("clears all entries with valid password", async () => {
+    mockClearEntries.mockResolvedValue(undefined);
+
+    const response = await DELETE(makeDeleteRequest("test123"));
+    const data = await response.json();
+    expect(response.status).toBe(200);
+    expect(data.message).toBe("已清除所有資料");
+    expect(mockClearEntries).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects wrong password", async () => {
+    const response = await DELETE(makeDeleteRequest("wrong"));
+    expect(response.status).toBe(401);
+  });
+
+  it("returns 500 when KV clearEntries fails", async () => {
+    mockClearEntries.mockRejectedValue(new Error("KV delete failed"));
+
+    const response = await DELETE(makeDeleteRequest("test123"));
+    const data = await response.json();
+    expect(response.status).toBe(500);
+    expect(data.error).toBe("清除失敗");
   });
 });
