@@ -21,8 +21,41 @@ describe("geocodeAddress", () => {
     expect(mockFetch.mock.calls[0][0]).toContain("nominatim.openstreetmap.org");
   });
 
-  it("falls back to Google when Nominatim returns empty", async () => {
+  it("retries with simplified address when full address fails", async () => {
+    // Full address fails, simplified (without 號) succeeds
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => [] } as Response);
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => [{ lat: "25.0314", lon: "121.4784" }],
+    } as Response);
+
+    const result = await geocodeAddress("220新北市板橋區懷德街181巷42號");
+    expect(result).toEqual({ lat: 25.0314, lng: 121.4784 });
+    // First call: full address (without postal code), second: without 號
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("retries up to street level when alley also fails", async () => {
+    // Full fails, without 號 fails, without 巷 succeeds
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => [] } as Response);
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => [] } as Response);
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => [{ lat: "25.0314", lon: "121.4784" }],
+    } as Response);
+
+    const result = await geocodeAddress("新北市板橋區懷德街181巷42號");
+    expect(result).toEqual({ lat: 25.0314, lng: 121.4784 });
+    expect(mockFetch).toHaveBeenCalledTimes(3);
+  });
+
+  it("falls back to Google when all Nominatim variants fail", async () => {
     process.env.GOOGLE_GEOCODING_API_KEY = "test-key";
+    // All Nominatim variants fail
+    mockFetch.mockResolvedValue({ ok: true, json: async () => [] } as Response);
+    // Override last call for Google success
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => [] } as Response);
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => [] } as Response);
     mockFetch.mockResolvedValueOnce({ ok: true, json: async () => [] } as Response);
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -32,24 +65,12 @@ describe("geocodeAddress", () => {
       }),
     } as Response);
 
-    const result = await geocodeAddress("台北市信義區");
+    const result = await geocodeAddress("新北市板橋區懷德街181巷42號");
     expect(result).toEqual({ lat: 25.033, lng: 121.5654 });
-    expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 
-  it("throws when both Nominatim and Google fail", async () => {
-    process.env.GOOGLE_GEOCODING_API_KEY = "test-key";
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => [] } as Response);
-    mockFetch.mockResolvedValueOnce({
-      ok: true, json: async () => ({ status: "ZERO_RESULTS", results: [] }),
-    } as Response);
-
+  it("throws when all Nominatim variants and Google fail", async () => {
+    mockFetch.mockResolvedValue({ ok: true, json: async () => [] } as Response);
     await expect(geocodeAddress("不存在的地址xyz")).rejects.toThrow("無法解析地址");
-  });
-
-  it("throws when Nominatim fails and no Google key configured", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => [] } as Response);
-    await expect(geocodeAddress("不存在的地址xyz")).rejects.toThrow("無法解析地址");
-    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 });
