@@ -71,6 +71,7 @@ export default function CsvUpload({ onUploaded }: CsvUploadProps) {
     setDragOver(false);
     const file = e.dataTransfer.files[0];
     if (file) handleFile(file);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
