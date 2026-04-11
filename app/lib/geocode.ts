@@ -83,8 +83,17 @@ function simplifyAddress(address: string): string[] {
   for (let i = 1; i < parts.length; i++) {
     add(parts.slice(i).join(", "));
   }
-  // 也嘗試移除尾部郵遞區號（國際格式，例如 "Yangon 11021" → "Yangon"）
-  add(cleaned.replace(/\s+\d{4,6}$/, ""));
+  // 移除郵遞區號（各種格式）
+  // "Yangon 11021" / "Yangon 11021緬甸" / "11021 Yangon"
+  add(cleaned.replace(/\s*\d{4,6}\s*\S*$/, ""));  // 尾部數字+可能的後綴
+  add(cleaned.replace(/\s*\d{4,6}\s*/g, " ").trim()); // 移除所有嵌入的郵遞區號
+
+  // 對每個逗號段也做郵遞區號清理再重試
+  for (let i = 1; i < parts.length; i++) {
+    const segment = parts.slice(i).join(", ");
+    add(segment.replace(/\s*\d{4,6}\s*\S*$/, ""));
+    add(segment.replace(/\s*\d{4,6}\s*/g, " ").trim());
+  }
 
   return variants;
 }
