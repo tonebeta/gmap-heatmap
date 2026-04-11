@@ -55,6 +55,15 @@ function simplifyAddress(address: string): string[] {
   // 英文：移除 "Floor X" / "Xf" / "X/F"
   add(cleaned.replace(/,?\s*\d+\s*(st|nd|rd|th)?\s*(floor|f)\b,?\s*/i, ""));
 
+  // 通用：逐步移除逗號/空格分隔的最左段（最精確的部分）
+  // 例如 "Mingalar Don, Yangon 11021" → "Yangon 11021" → "Yangon"
+  const parts = cleaned.split(/[,，]\s*/);
+  for (let i = 1; i < parts.length; i++) {
+    add(parts.slice(i).join(", "));
+  }
+  // 也嘗試移除尾部郵遞區號（國際格式，例如 "Yangon 11021" → "Yangon"）
+  add(cleaned.replace(/\s+\d{4,6}$/, ""));
+
   return variants;
 }
 
