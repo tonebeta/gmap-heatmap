@@ -19,8 +19,8 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
-const TAIWAN_CENTER: [number, number] = [23.5, 121];
-const DEFAULT_ZOOM = 7;
+const DEFAULT_CENTER: [number, number] = [19.75, 96.13]; // Myanmar
+const DEFAULT_ZOOM = 6;
 
 function createCountIcon(count: number) {
   const size = count < 10 ? 36 : count < 100 ? 44 : 52;
@@ -129,7 +129,7 @@ interface HeatMapProps {
 
 export default function HeatMap({ entries }: HeatMapProps) {
   return (
-    <MapContainer center={TAIWAN_CENTER} zoom={DEFAULT_ZOOM} className="h-full w-full">
+    <MapContainer center={DEFAULT_CENTER} zoom={DEFAULT_ZOOM} className="h-full w-full">
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
