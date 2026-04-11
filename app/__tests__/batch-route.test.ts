@@ -60,4 +60,26 @@ describe("POST /api/entries/batch", () => {
     const response = await POST(createCsvRequest("暱稱,地址,標籤\n小明,台北市,朋友", "wrong"));
     expect(response.status).toBe(401);
   });
+
+  it("rejects CSV exceeding 50 rows", async () => {
+    const header = "暱稱,地址,標籤";
+    const rows = Array.from({ length: 51 }, (_, i) => `user${i},台北市,tag`).join("\n");
+    const csv = `${header}\n${rows}`;
+
+    const response = await POST(createCsvRequest(csv));
+    const data = await response.json();
+    expect(response.status).toBe(400);
+    expect(data.error).toContain("超過上限");
+  });
+
+  it("returns 500 when KV addEntries fails", async () => {
+    mockGeocode.mockResolvedValue({ lat: 25.03, lng: 121.56 });
+    mockAddEntries.mockRejectedValue(new Error("KV write failed"));
+
+    const csv = `暱稱,地址,標籤\n小明,台北市,朋友`;
+    const response = await POST(createCsvRequest(csv));
+    const data = await response.json();
+    expect(response.status).toBe(500);
+    expect(data.error).toBe("儲存失敗");
+  });
 });

@@ -5,6 +5,8 @@ import { geocodeAddress } from "@/lib/geocode";
 import { parseCsv } from "@/lib/csv";
 import { Entry, BatchResult } from "@/lib/types";
 
+const MAX_BATCH_ROWS = 50;
+
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -26,6 +28,13 @@ export async function POST(request: Request) {
 
   if (rows.length === 0) {
     return NextResponse.json({ error: "CSV 中無有效資料" }, { status: 400 });
+  }
+
+  if (rows.length > MAX_BATCH_ROWS) {
+    return NextResponse.json(
+      { error: `CSV 超過上限，最多 ${MAX_BATCH_ROWS} 筆` },
+      { status: 400 }
+    );
   }
 
   const result: BatchResult = { success: 0, failed: [] };
@@ -57,7 +66,11 @@ export async function POST(request: Request) {
   }
 
   if (entries.length > 0) {
-    await addEntries(entries);
+    try {
+      await addEntries(entries);
+    } catch {
+      return NextResponse.json({ error: "儲存失敗" }, { status: 500 });
+    }
   }
 
   return NextResponse.json(result);

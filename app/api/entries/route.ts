@@ -5,8 +5,12 @@ import { geocodeAddress } from "@/lib/geocode";
 import { Entry } from "@/lib/types";
 
 export async function GET() {
-  const entries = await getEntries();
-  return NextResponse.json(entries);
+  try {
+    const entries = await getEntries();
+    return NextResponse.json(entries);
+  } catch {
+    return NextResponse.json({ error: "無法讀取資料" }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {
@@ -39,6 +43,11 @@ export async function POST(request: Request) {
     createdAt: new Date().toISOString(),
   };
 
-  await addEntry(entry);
+  try {
+    await addEntry(entry);
+  } catch {
+    return NextResponse.json({ error: "儲存失敗" }, { status: 500 });
+  }
+
   return NextResponse.json(entry, { status: 201 });
 }

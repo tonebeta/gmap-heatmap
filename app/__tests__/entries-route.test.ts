@@ -27,6 +27,15 @@ describe("GET /api/entries", () => {
     expect(response.status).toBe(200);
     expect(data).toEqual(entries);
   });
+
+  it("returns 500 when KV fails", async () => {
+    mockGetEntries.mockRejectedValue(new Error("KV unavailable"));
+
+    const response = await GET();
+    const data = await response.json();
+    expect(response.status).toBe(500);
+    expect(data.error).toBe("無法讀取資料");
+  });
 });
 
 describe("POST /api/entries", () => {
@@ -67,5 +76,21 @@ describe("POST /api/entries", () => {
     });
     const response = await POST(request);
     expect(response.status).toBe(400);
+  });
+
+  it("returns 500 when KV addEntry fails", async () => {
+    mockGeocode.mockResolvedValue({ lat: 25.03, lng: 121.56 });
+    mockAddEntry.mockRejectedValue(new Error("KV write failed"));
+
+    const request = new Request("http://localhost/api/entries", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-entry-password": "test123" },
+      body: JSON.stringify({ nickname: "小明", address: "台北市", tag: "" }),
+    });
+
+    const response = await POST(request);
+    const data = await response.json();
+    expect(response.status).toBe(500);
+    expect(data.error).toBe("儲存失敗");
   });
 });
