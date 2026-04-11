@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Entry } from "@/lib/types";
 import EntryForm from "./EntryForm";
-import CsvUpload from "./CsvUpload";
 import StatsPanel from "./StatsPanel";
 import PasswordModal from "./PasswordModal";
 
@@ -14,7 +13,6 @@ interface SidebarProps {
 
 const NAV_ITEMS = [
   { id: "form", icon: "📍", label: "新增標記" },
-  { id: "csv", icon: "📂", label: "上傳 CSV" },
   { id: "stats", icon: "📊", label: "統計" },
 ] as const;
 
@@ -192,10 +190,6 @@ export default function Sidebar({ entries, onDataChanged }: SidebarProps) {
           <div className="flex-1 space-y-4 overflow-y-auto p-4">
             <div id="section-form">
               <EntryForm onEntryAdded={onDataChanged} />
-            </div>
-            <hr className="border-gray-200" />
-            <div id="section-csv">
-              <CsvUpload onUploaded={onDataChanged} />
             </div>
             <hr className="border-gray-200" />
             <div id="section-stats">
