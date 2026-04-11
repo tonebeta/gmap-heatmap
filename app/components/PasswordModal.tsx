@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 
 interface PasswordModalProps {
   onSubmit: (password: string) => void;
@@ -10,7 +11,7 @@ interface PasswordModalProps {
 export default function PasswordModal({ onSubmit, onCancel }: PasswordModalProps) {
   const [password, setPassword] = useState("");
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="w-80 rounded-lg bg-white p-6 shadow-xl">
         <h3 className="mb-4 text-lg font-semibold text-gray-800">請輸入密碼</h3>
@@ -32,6 +33,7 @@ export default function PasswordModal({ onSubmit, onCancel }: PasswordModalProps
           >確認</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
