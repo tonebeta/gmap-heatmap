@@ -80,6 +80,24 @@ export default function Sidebar({ entries, onDataChanged }: SidebarProps) {
     }
   }
 
+  function handleExportCsv() {
+    if (entries.length === 0) return;
+    const header = "暱稱,地址,標籤,緯度,經度,區域,建立時間";
+    const rows = entries.map((e) =>
+      [e.nickname, e.address, e.tag, e.lat, e.lng, e.region || "", e.createdAt]
+        .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+        .join(",")
+    );
+    const csv = "\uFEFF" + [header, ...rows].join("\n"); // BOM for Excel UTF-8
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `heatmap-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <>
       <div
@@ -139,6 +157,16 @@ export default function Sidebar({ entries, onDataChanged }: SidebarProps) {
               <>
                 <div className="my-1 w-6 border-t border-gray-200" />
                 <button
+                  onClick={handleExportCsv}
+                  className="group relative flex h-10 w-10 items-center justify-center rounded-lg text-lg hover:bg-green-50"
+                  title="匯出 CSV"
+                >
+                  💾
+                  <span className="pointer-events-none absolute left-full ml-2 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+                    匯出 CSV
+                  </span>
+                </button>
+                <button
                   onClick={() => handleIconClick()}
                   className="group relative flex h-10 w-10 items-center justify-center rounded-lg text-lg hover:bg-red-50"
                   title="清除所有資料"
@@ -176,6 +204,12 @@ export default function Sidebar({ entries, onDataChanged }: SidebarProps) {
             {entries.length > 0 && (
               <>
                 <hr className="border-gray-200" />
+                <button
+                  onClick={handleExportCsv}
+                  className="w-full rounded border border-green-300 py-2 text-sm text-green-700 hover:bg-green-50"
+                >
+                  匯出 CSV（{entries.length} 筆）
+                </button>
                 <div className="flex gap-2">
                   <button
                     onClick={onResetClick}
