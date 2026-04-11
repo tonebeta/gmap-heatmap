@@ -15,6 +15,7 @@ interface SidebarProps {
 export default function Sidebar({ entries, onDataChanged }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
+  const [confirmingReset, setConfirmingReset] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [resetError, setResetError] = useState("");
 
@@ -31,6 +32,7 @@ export default function Sidebar({ entries, onDataChanged }: SidebarProps) {
       if (res.status === 401) {
         localStorage.removeItem("entry-password");
         setResetError("密碼錯誤");
+        setShowResetModal(true);
         return;
       }
 
@@ -46,7 +48,23 @@ export default function Sidebar({ entries, onDataChanged }: SidebarProps) {
       setResetError("網路錯誤");
     } finally {
       setResetting(false);
-      setShowResetModal(false);
+      setConfirmingReset(false);
+    }
+  }
+
+  function onResetClick() {
+    if (!confirmingReset) {
+      setConfirmingReset(true);
+      setResetError("");
+      return;
+    }
+
+    const savedPassword = localStorage.getItem("entry-password");
+    if (savedPassword) {
+      handleReset(savedPassword);
+    } else {
+      setShowResetModal(true);
+      setConfirmingReset(false);
     }
   }
 
@@ -84,22 +102,31 @@ export default function Sidebar({ entries, onDataChanged }: SidebarProps) {
         {entries.length > 0 && (
           <>
             <hr className="border-gray-200" />
-            <button
-              onClick={() => {
-                const savedPassword = localStorage.getItem("entry-password");
-                if (savedPassword) {
-                  if (confirm("確定要清除所有資料嗎？")) {
-                    handleReset(savedPassword);
-                  }
-                } else {
-                  setShowResetModal(true);
-                }
-              }}
-              disabled={resetting}
-              className="w-full rounded border border-red-300 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
-            >
-              {resetting ? "清除中..." : "清除所有資料"}
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={onResetClick}
+                disabled={resetting}
+                className={`flex-1 rounded py-2 text-sm disabled:opacity-50 ${
+                  confirmingReset
+                    ? "bg-red-600 text-white hover:bg-red-700"
+                    : "border border-red-300 text-red-600 hover:bg-red-50"
+                }`}
+              >
+                {resetting
+                  ? "清除中..."
+                  : confirmingReset
+                    ? "確定清除？"
+                    : "清除所有資料"}
+              </button>
+              {confirmingReset && (
+                <button
+                  onClick={() => setConfirmingReset(false)}
+                  className="rounded border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                >
+                  取消
+                </button>
+              )}
+            </div>
             {resetError && <p className="text-xs text-red-500">{resetError}</p>}
           </>
         )}
@@ -109,9 +136,7 @@ export default function Sidebar({ entries, onDataChanged }: SidebarProps) {
         <PasswordModal
           onSubmit={(pw) => {
             setShowResetModal(false);
-            if (confirm("確定要清除所有資料嗎？")) {
-              handleReset(pw);
-            }
+            handleReset(pw);
           }}
           onCancel={() => setShowResetModal(false)}
         />
