@@ -24,30 +24,42 @@ async function geocodeWithGoogle(address: string): Promise<GeocodingResult | nul
   return { lat, lng };
 }
 
-// Nominatim 對台灣地址只支援到「街/路」層級，
-// 含巷弄門牌號的完整地址會查無結果。
-// 策略：逐步簡化地址重試（完整 → 去門牌 → 去巷弄）。
-function simplifyTaiwanAddress(address: string): string[] {
+// Nominatim 對精確門牌地址常查無結果。
+// 策略：逐步簡化地址重試，支援中文和英文格式。
+function simplifyAddress(address: string): string[] {
   const cleaned = address.replace(/^\d{3,5}\s*/, ""); // 移除郵遞區號
   const variants = [cleaned];
+  const seen = new Set([cleaned]);
 
-  // 移除「號」及之後（例如 42號 → 去掉）
-  const noNumber = cleaned.replace(/\d+號.*$/, "");
-  if (noNumber !== cleaned) variants.push(noNumber);
+  function add(v: string) {
+    const trimmed = v.replace(/^[,，\s]+|[,，\s]+$/g, "").trim();
+    if (trimmed && !seen.has(trimmed)) {
+      seen.add(trimmed);
+      variants.push(trimmed);
+    }
+  }
 
-  // 移除「巷」及之後（例如 181巷42號 → 去掉）
-  const noAlley = cleaned.replace(/\d+巷.*$/, "");
-  if (noAlley !== noNumber && noAlley !== cleaned) variants.push(noAlley);
+  // 中文：移除「號」及之後
+  add(cleaned.replace(/\d+號.*$/, ""));
+  // 中文：移除「巷」及之後
+  add(cleaned.replace(/\d+巷.*$/, ""));
+  // 中文：移除「弄」及之後
+  add(cleaned.replace(/\d+弄.*$/, ""));
 
-  // 移除「弄」及之後
-  const noLane = cleaned.replace(/\d+弄.*$/, "");
-  if (noLane !== noAlley && noLane !== cleaned) variants.push(noLane);
+  // 英文：移除 "No. X," / "No X,"
+  add(cleaned.replace(/No\.?\s*\d+\s*,?\s*/i, ""));
+  // 英文：移除 "Section X," / "Sec. X,"
+  add(cleaned.replace(/Sec(tion|\.)\s*\d+\s*,?\s*/i, ""));
+  // 英文：移除門牌號開頭 "123, Street" → "Street"
+  add(cleaned.replace(/^\d+\s*,\s*/, ""));
+  // 英文：移除 "Floor X" / "Xf" / "X/F"
+  add(cleaned.replace(/,?\s*\d+\s*(st|nd|rd|th)?\s*(floor|f)\b,?\s*/i, ""));
 
   return variants;
 }
 
 export async function geocodeAddress(address: string): Promise<GeocodingResult> {
-  const variants = simplifyTaiwanAddress(address);
+  const variants = simplifyAddress(address);
 
   for (const variant of variants) {
     const result = await geocodeWithNominatim(variant).catch(() => null);

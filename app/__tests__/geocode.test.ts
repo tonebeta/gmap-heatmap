@@ -73,4 +73,28 @@ describe("geocodeAddress", () => {
     mockFetch.mockResolvedValue({ ok: true, json: async () => [] } as Response);
     await expect(geocodeAddress("不存在的地址xyz")).rejects.toThrow("無法解析地址");
   });
+
+  it("simplifies English address with No. prefix", async () => {
+    // "No. 7, Section 5, Xinyi Road, Taipei" fails, without "No. 7," succeeds
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => [] } as Response);
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => [{ lat: "25.0330", lon: "121.5654" }],
+    } as Response);
+
+    const result = await geocodeAddress("No. 7, Section 5, Xinyi Road, Taipei");
+    expect(result).toEqual({ lat: 25.033, lng: 121.5654 });
+  });
+
+  it("simplifies English address with leading house number", async () => {
+    // "123, Main Street, City" fails, "Main Street, City" succeeds
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => [] } as Response);
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => [{ lat: "40.7128", lon: "-74.0060" }],
+    } as Response);
+
+    const result = await geocodeAddress("123, Main Street, New York");
+    expect(result).toEqual({ lat: 40.7128, lng: -74.006 });
+  });
 });
