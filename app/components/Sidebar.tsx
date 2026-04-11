@@ -63,13 +63,8 @@ export default function Sidebar({ entries, onDataChanged }: SidebarProps) {
       return;
     }
 
-    const savedPassword = localStorage.getItem("entry-password");
-    if (savedPassword) {
-      handleReset(savedPassword);
-    } else {
-      setShowResetModal(true);
-      setConfirmingReset(false);
-    }
+    setShowResetModal(true);
+    setConfirmingReset(false);
   }
 
   function handleIconClick() {

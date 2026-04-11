@@ -46,7 +46,7 @@ describe("POST /api/entries", () => {
 
     const request = new Request("http://localhost/api/entries", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-entry-password": "test123" },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ nickname: "小明", address: "台北市信義區", tag: "朋友" }),
     });
 
@@ -59,20 +59,11 @@ describe("POST /api/entries", () => {
     expect(mockAddEntry).toHaveBeenCalledTimes(1);
   });
 
-  it("rejects wrong password", async () => {
-    const request = new Request("http://localhost/api/entries", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-entry-password": "wrong" },
-      body: JSON.stringify({ nickname: "小明", address: "台北市", tag: "" }),
-    });
-    const response = await POST(request);
-    expect(response.status).toBe(401);
-  });
 
   it("rejects missing nickname or address", async () => {
     const request = new Request("http://localhost/api/entries", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-entry-password": "test123" },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ nickname: "", address: "台北市", tag: "" }),
     });
     const response = await POST(request);
@@ -85,7 +76,7 @@ describe("POST /api/entries", () => {
 
     const request = new Request("http://localhost/api/entries", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-entry-password": "test123" },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ nickname: "小明", address: "台北市", tag: "" }),
     });
 
