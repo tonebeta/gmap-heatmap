@@ -106,7 +106,7 @@ export default function Sidebar({ entries, onDataChanged }: SidebarProps) {
         <div className="flex items-center border-b border-gray-200 px-3 py-3">
           {!collapsed && (
             <h2 className="flex-1 truncate text-base font-bold text-gray-800">
-              🗺️ 地址熱點圖
+              🗺️ 地址熱點圖統計
             </h2>
           )}
           <button

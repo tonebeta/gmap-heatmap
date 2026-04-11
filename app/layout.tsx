@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "地址熱點圖 POC",
+  title: "地址熱點圖統計",
   description: "輸入暱稱與地址，顯示在地圖上的熱點圖與統計",
 };
 
