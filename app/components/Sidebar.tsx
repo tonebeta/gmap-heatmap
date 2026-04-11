@@ -19,6 +19,7 @@ const NAV_ITEMS = [
 export default function Sidebar({ entries, onDataChanged }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   const [confirmingReset, setConfirmingReset] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [resetError, setResetError] = useState("");
@@ -73,8 +74,19 @@ export default function Sidebar({ entries, onDataChanged }: SidebarProps) {
     }
   }
 
-  function handleExportCsv() {
+  async function handleExportCsv(password: string) {
     if (entries.length === 0) return;
+    // 驗證密碼（借用 DELETE endpoint 的密碼驗證，用 dry-run header）
+    const res = await fetch("/api/entries/verify", {
+      method: "POST",
+      headers: { "x-entry-password": password },
+    });
+    if (res.status === 401) {
+      setResetError("密碼錯誤");
+      setShowExportModal(true);
+      return;
+    }
+    setResetError("");
     const header = "暱稱,地址,標籤,緯度,經度,區域,建立時間";
     const rows = entries.map((e) =>
       [e.nickname, e.address, e.tag, e.lat, e.lng, e.region || "", e.createdAt]
@@ -150,7 +162,7 @@ export default function Sidebar({ entries, onDataChanged }: SidebarProps) {
               <>
                 <div className="my-1 w-6 border-t border-gray-200" />
                 <button
-                  onClick={handleExportCsv}
+                  onClick={() => setShowExportModal(true)}
                   className="group relative flex h-10 w-10 items-center justify-center rounded-lg text-lg hover:bg-green-50"
                   title="匯出 CSV"
                 >
@@ -194,7 +206,7 @@ export default function Sidebar({ entries, onDataChanged }: SidebarProps) {
               <>
                 <hr className="border-gray-200" />
                 <button
-                  onClick={handleExportCsv}
+                  onClick={() => setShowExportModal(true)}
                   className="w-full rounded border border-green-300 py-2 text-sm text-green-700 hover:bg-green-50"
                 >
                   匯出 CSV（{entries.length} 筆）
@@ -240,6 +252,16 @@ export default function Sidebar({ entries, onDataChanged }: SidebarProps) {
             handleReset(pw);
           }}
           onCancel={() => setShowResetModal(false)}
+        />
+      )}
+
+      {showExportModal && (
+        <PasswordModal
+          onSubmit={(pw) => {
+            setShowExportModal(false);
+            handleExportCsv(pw);
+          }}
+          onCancel={() => setShowExportModal(false)}
         />
       )}
     </>
