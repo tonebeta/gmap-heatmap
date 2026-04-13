@@ -45,6 +45,73 @@ function createCountIcon(count: number) {
   });
 }
 
+function LocateControl() {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+
+    const control = new L.Control({ position: "bottomright" });
+
+    control.onAdd = () => {
+      const container = L.DomUtil.create("div", "leaflet-bar leaflet-control");
+      const btn = L.DomUtil.create("a", "", container);
+      btn.href = "#";
+      btn.title = "定位我的位置";
+      btn.setAttribute("role", "button");
+      btn.setAttribute("aria-label", "定位我的位置");
+      btn.style.cssText =
+        "width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#fff;";
+      btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>`;
+
+      const spinKeyframes = `@keyframes locate-spin{to{transform:rotate(360deg)}}`;
+      let styleEl: HTMLStyleElement | null = null;
+
+      L.DomEvent.disableClickPropagation(container);
+
+      L.DomEvent.on(btn, "click", (e) => {
+        L.DomEvent.preventDefault(e);
+
+        // Loading state
+        if (!styleEl) {
+          styleEl = document.createElement("style");
+          styleEl.textContent = spinKeyframes;
+          document.head.appendChild(styleEl);
+        }
+        const svg = btn.querySelector("svg");
+        if (svg) svg.style.animation = "locate-spin 0.8s linear infinite";
+
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            if (svg) svg.style.animation = "";
+            map.flyTo([pos.coords.latitude, pos.coords.longitude], 14);
+          },
+          (err) => {
+            if (svg) svg.style.animation = "";
+            const messages: Record<number, string> = {
+              1: "請允許瀏覽器存取您的位置",
+              2: "無法取得位置資訊",
+              3: "定位超時，請重試",
+            };
+            alert(messages[err.code] || "定位失敗");
+          },
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+        );
+      });
+
+      return container;
+    };
+
+    map.addControl(control);
+    return () => {
+      map.removeControl(control);
+    };
+  }, [map]);
+
+  if (typeof window !== "undefined" && !navigator.geolocation) return null;
+  return null;
+}
+
 function MapResizeHandler() {
   const map = useMap();
 
@@ -157,6 +224,7 @@ export default function HeatMap({ entries }: HeatMapProps) {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <MapResizeHandler />
+      <LocateControl />
       <HeatLayer entries={entries} />
     </MapContainer>
   );
