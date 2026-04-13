@@ -45,6 +45,28 @@ function createCountIcon(count: number) {
   });
 }
 
+function MapResizeHandler() {
+  const map = useMap();
+
+  useEffect(() => {
+    const container = map.getContainer();
+    let timeout: ReturnType<typeof setTimeout>;
+
+    const observer = new ResizeObserver(() => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => map.invalidateSize(), 300);
+    });
+    observer.observe(container);
+
+    return () => {
+      observer.disconnect();
+      clearTimeout(timeout);
+    };
+  }, [map]);
+
+  return null;
+}
+
 function HeatLayer({ entries }: { entries: Entry[] }) {
   const map = useMap();
   const heatLayerRef = useRef<L.HeatLayer | null>(null);
@@ -134,6 +156,7 @@ export default function HeatMap({ entries }: HeatMapProps) {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+      <MapResizeHandler />
       <HeatLayer entries={entries} />
     </MapContainer>
   );

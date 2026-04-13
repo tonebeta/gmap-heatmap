@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Entry } from "@/lib/types";
 import EntryForm from "./EntryForm";
 import StatsPanel from "./StatsPanel";
@@ -17,7 +17,19 @@ const NAV_ITEMS = [
 ] as const;
 
 export default function Sidebar({ entries, onDataChanged }: SidebarProps) {
+  const [isMobile, setIsMobile] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    const check = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile) setCollapsed(true);
+    };
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
   const [showResetModal, setShowResetModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [confirmingReset, setConfirmingReset] = useState(false);
@@ -103,11 +115,22 @@ export default function Sidebar({ entries, onDataChanged }: SidebarProps) {
     URL.revokeObjectURL(url);
   }
 
+  const sidebarWidth = collapsed ? 56 : 320;
+
   return (
     <>
+      {/* Mobile overlay backdrop */}
+      {isMobile && !collapsed && (
+        <div
+          className="fixed inset-0 z-[9998] bg-black/30"
+          onClick={() => setCollapsed(true)}
+        />
+      )}
       <div
-        className="flex h-full shrink-0 flex-col border-r border-gray-200 bg-white transition-all duration-300 ease-in-out"
-        style={{ width: collapsed ? 56 : 320 }}
+        className={`flex h-full shrink-0 flex-col border-r border-gray-200 bg-white transition-all duration-300 ease-in-out ${
+          isMobile && !collapsed ? "fixed inset-y-0 left-0 z-[9998] shadow-xl" : ""
+        } ${isMobile && collapsed ? "absolute left-0 top-0 z-[9998] h-auto rounded-br-lg shadow-md" : ""}`}
+        style={{ width: isMobile && collapsed ? 48 : sidebarWidth }}
       >
         {/* Header */}
         <div className="flex items-center border-b border-gray-200 px-3 py-3">
