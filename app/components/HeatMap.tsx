@@ -84,7 +84,7 @@ function LocateControl() {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
             if (svg) svg.style.animation = "";
-            map.flyTo([pos.coords.latitude, pos.coords.longitude], 14);
+            map.setView([pos.coords.latitude, pos.coords.longitude], 14);
           },
           (err) => {
             if (svg) svg.style.animation = "";
